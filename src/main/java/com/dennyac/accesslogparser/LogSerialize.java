@@ -1,73 +1,66 @@
 package com.dennyac.accesslogparser;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.avro.file.DataFileWriter;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.specific.SpecificDatumWriter;
 
+
+/**
+ * The LogSerialize class consumes log entries from the write queue,
+ * and serializes these log entries to Avro file format
+ * @author Denny Abraham Cheriyan
+ * @version 1.0, Aug 2014
+ */
 public class LogSerialize implements Runnable {
   private static final Logger logger = Logger.getLogger(LogSerialize.class.getName());
   private final BlockingQueue<LogEntry> writeQueue;
-  private final File file;
-  private final FileWriter fw;
-  private final BufferedWriter bw;
   private final JobStatus jobStatus;
+  DatumWriter<LogEntryAvro> logDatumWriter = new SpecificDatumWriter<LogEntryAvro>(
+      LogEntryAvro.class);
+  DataFileWriter<LogEntryAvro> dataFileWriter = new DataFileWriter<LogEntryAvro>(logDatumWriter);
 
-  public LogSerialize(BlockingQueue<LogEntry> writeQueue, String filePath, JobStatus jobStatus) throws IOException {
-    //logger.addHandler(new ConsoleHandler());
+  /**
+   * The constructor initializes the write queue, filePath for the avro file and the job status object
+   * 
+   * @param writeQueue  Queue of log entries to be serialized
+   * @param filePath    Avro file to write to
+   * @param jobStatus   Object which contains the status of the threads
+   */
+  public LogSerialize(BlockingQueue<LogEntry> writeQueue, String filePath, JobStatus jobStatus)
+      throws IOException {
     this.writeQueue = writeQueue;
     this.jobStatus = jobStatus;
-    file = new File(filePath);
-    // if file doesnt exists, then create it
-    if (!file.exists()) {
-      logger.log(Level.INFO, "File doesn't exist. Creating..");
-      file.createNewFile();
-      logger.log(Level.INFO, "File created");
-    }
-    logger.log(Level.INFO, "Initializing fileWriters");
-    fw = new FileWriter(file.getAbsoluteFile());
-    bw = new BufferedWriter(fw);
-    logger.log(Level.INFO, "Initialized fileWriters");
-    
-    //fileRead should be complete
-    //update should be complete
-    //writequeue should be empty
+    dataFileWriter.create(LogEntryAvro.getClassSchema(), new File(filePath));
   }
 
+  /**
+   * This thread consumes log entries from the write queue, as long as it is
+   * not empty, or either the lineReader/IpUpdate threads are still in progress 
+   */
   public void run() {
     try {
       logger.log(Level.INFO, "Entered LogSerialize run method");
-      logger.log(Level.INFO, "jobStatus.isFileReadComplete() is " + jobStatus.isIpUpdateComplete());
-      logger.log(Level.INFO, "writeQueue.size() is " + writeQueue.size());
-      while (!writeQueue.isEmpty() || !jobStatus.isIpUpdateComplete() || !jobStatus.isFileReadComplete()) {
-        logger.log(Level.INFO, "(Inside) jobStatus.isFileReadComplete() is " + jobStatus.isIpUpdateComplete());
-        logger.log(Level.INFO, "(Inside) writeQueue.size() is " + writeQueue.size());
-        LogEntry logEntry = writeQueue.poll(1000, TimeUnit.MILLISECONDS);  //I guess it waits over here
-        if(logEntry != null){
-          logger.log(Level.INFO, "Adding log entry to file");
-          bw.write(logEntry.toString());
-          bw.newLine();
-          logger.log(Level.INFO, "Added log entry to file");
+      while (!writeQueue.isEmpty() || !jobStatus.isIpUpdateComplete()
+          || !jobStatus.isFileReadComplete()) {
+
+        LogEntry logEntry = writeQueue.poll(1000, TimeUnit.MILLISECONDS);
+        if (logEntry != null) {
+          dataFileWriter.append(logEntry.getAvroObject());
         }
-        
       }
+      dataFileWriter.close();
+      logger.log(Level.INFO, "Setting WriteComplete to true");
       jobStatus.setWriteComplete(true);
     } catch (IOException e1) {
       logger.log(Level.SEVERE, "LogSerialize encountered IOException", e1);
     } catch (InterruptedException e) {
       logger.log(Level.SEVERE, "LogSerialize encountered InterruptedException", e);
-    } finally {
-      try {
-        bw.close();
-      } catch (IOException e) {
-        logger.log(Level.SEVERE, "LogSerialize encountered IOException", e);
-      }
-
     }
 
   }

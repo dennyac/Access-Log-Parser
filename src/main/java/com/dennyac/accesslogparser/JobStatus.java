@@ -1,5 +1,11 @@
 package com.dennyac.accesslogparser;
 
+/**
+ * The JobStatus class contains flags for sending signals across threads.
+ * 
+ * @author Denny Abraham Cheriyan
+ * @version 1.0, Aug 2014
+ */
 public class JobStatus {
   private boolean fileReadComplete;
   private boolean IpUpdateComplete;
@@ -11,27 +17,19 @@ public class JobStatus {
   public synchronized void setWriteComplete(boolean writeComplete) {
     this.writeComplete = writeComplete;
   }
-  /**
-   * @return the fileReadComplete
-   */
+
   public synchronized boolean isFileReadComplete() {
     return fileReadComplete;
   }
-  /**
-   * @param fileReadComplete the fileReadComplete to set
-   */
+ 
   public synchronized void setFileReadComplete(boolean fileReadComplete) {
     this.fileReadComplete = fileReadComplete;
   }
-  /**
-   * @return the ipUpdateComplete
-   */
+
   public synchronized boolean isIpUpdateComplete() {
     return IpUpdateComplete;
   }
-  /**
-   * @param ipUpdateComplete the ipUpdateComplete to set
-   */
+
   public synchronized void setIpUpdateComplete(boolean ipUpdateComplete) {
     IpUpdateComplete = ipUpdateComplete;
   }

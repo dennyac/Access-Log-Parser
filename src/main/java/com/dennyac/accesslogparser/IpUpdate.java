@@ -1,62 +1,64 @@
 package com.dennyac.accesslogparser;
 
 import java.io.IOException;
-
 import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
-// import java.util.logging.Logger;
-
 import java.util.concurrent.TimeUnit;
-import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import com.google.gson.JsonObject;
 
+/**
+ * The IpUpdate class consumes parsed log entries from the intermediate queue, updates the ip
+ * related details for each log entry, and then places the updated log entry on the write queue.
+ * Maintains an in-memory HashMap containing ip details to reduce the number of api calls to fetch the
+ * details
+ * @author Denny Abraham Cheriyan
+ * @version 1.0, Aug 2014
+ */
 public class IpUpdate implements Runnable {
-  // private static final Logger logger = Logger.getLogger(Parser.class.getName());
+
   private static final Logger logger = Logger.getLogger(IpUpdate.class.getName());
   private final BlockingQueue<LogEntry> intermediateQueue;
   private final BlockingQueue<LogEntry> writeQueue;
   private final JobStatus jobStatus;
+
+  // In-memory HashMap
   HashMap<String, JsonObject> cachedIP = new HashMap<String, JsonObject>();
 
+  /**
+   * The constructor initializes the intermediate queue, write queue and the job status object
+   * 
+   * @param intermediateQueue queue of log entries for which ip details have to be updated
+   * @param writeQueue queue of log entries to be serialized
+   * @param jobStatus object which contains the status of the threads
+   */
   public IpUpdate(BlockingQueue<LogEntry> intermediateQueue, BlockingQueue<LogEntry> writeQueue,
       JobStatus jobStatus) {
-   // logger.addHandler(new ConsoleHandler());
     this.intermediateQueue = intermediateQueue;
     this.writeQueue = writeQueue;
     this.jobStatus = jobStatus;
   }
 
+  /**
+   * The ipUpdate thread will continue polling the intermediate queue for
+   * log entries to process, as long as the intermediate queue is not empty 
+   * or the fileReader thread hasn't completed reading the input file
+   */
   public void run() {
-    // Will have to implement this later on
-    // while (logQueue.size() != 0 || !lineReadComplete) {
+
     logger.log(Level.INFO, "Entered IpUpdate run method");
-    logger.log(Level.INFO, "jobStatus.isFileReadComplete() is " + jobStatus.isFileReadComplete());
-    logger.log(Level.INFO, "intermediateQueue.size() is " + intermediateQueue.size());
+
     while (!intermediateQueue.isEmpty() || !jobStatus.isFileReadComplete()) {
-      logger.log(Level.INFO,
-        "(Inside) jobStatus.isFileReadComplete() is " + jobStatus.isFileReadComplete());
-      logger.log(Level.INFO, "(Inside) intermediateQueue.size() is " + intermediateQueue.size());
+
       LogEntry log;
-      // what if the queue becomes empty at this point. And there are no more records, that
-      // will be added to the intermediate queue, Then when take() is invoked
       try {
         log = intermediateQueue.poll(1000, TimeUnit.MILLISECONDS);
-        // try {
         if (log != null) {
-          logger.log(Level.INFO, "Updating ipDetails");
           updateIpDetails(log);
-          logger.log(Level.INFO, "ipDetails updated");
           writeQueue.put(log);
-          logger.log(Level.INFO, "Added logEntry to writeQueue");
 
         }
-        // } catch (Exception e) {
-        // badQueue.add(new BadEntry(log.toString(), e.toString()));
-        // }
-
       } catch (InterruptedException e1) {
         logger.log(Level.SEVERE, "IpUpdate encountered InterruptedException", e1);
       }
@@ -66,65 +68,48 @@ public class IpUpdate implements Runnable {
     jobStatus.setIpUpdateComplete(true);
   }
 
+  /**
+   * Takes a log entry as input and updates the log entry with the ip related details
+   * @param LogEntry A single log entry
+   */
   public void updateIpDetails(LogEntry log) {
     logger.entering(getClass().getName(), "updateIpDetails");
-    logger.log(Level.INFO, "Trying to update details for ip " + log.getRemoteHost());
+
     String ip = log.getRemoteHost();
     JsonObject ipDetails;
-    // Check what causes the IOException and handle appropriately
+
     try {
       if (cachedIP.containsKey(ip)) {
-        logger.log(Level.INFO, "Cache hit!");
+        // Cache hit!
         ipDetails = cachedIP.get(ip);
       } else {
-        logger.log(Level.INFO, "Cache miss. Making REST API call");
         ipDetails = getIpDetails(ip);
-        logger.log(Level.INFO, "Fetched ip details");
         cachedIP.put(ip, ipDetails);
       }
-      logger.log(Level.INFO, "Updating logEntry with ipDetails");
+
       log.setIspName(ipDetails.get("isp").getAsString());
       log.setLatitude(ipDetails.get("lat").getAsString());
       log.setLongitude(ipDetails.get("lon").getAsString());
       log.setOrganization(ipDetails.get("org").getAsString());
-      logger.log(Level.INFO, "Updated logEntry with ipDetails");
+
     } catch (IOException e) {
       logger.log(Level.SEVERE, "Error occured during updateIpDetails", e);
-      log.appendError("Unable to update ip details\n" + e);
+      log.setError("Unable to update ip details\n" + e);
+    } catch (Exception e) {
+
     }
     logger.exiting(getClass().getName(), "updateIpDetails");
   }
 
-  // Should I move this to another class??
-  // Change it to opening and closing the connection only once
- 
-
+  /**
+   * Takes an ip address as input and returns a Json object that contains the ip details
+   * @param ip ip address for which details are required
+   * @return Json object containing ip details
+   * @exception IOException (thrown from HttpRequest.getJson(url)
+   */
   public JsonObject getIpDetails(String ip) throws IOException {
-    logger.entering(getClass().getName(), "getIpDetails");
     String url = "http://ip-api.com/json/" + ip;
-    logger.log(Level.INFO, "Going to make rest call to " + url);
     return HttpRequest.getJson(url);
-//    logger.log(Level.INFO, "Obtained json as string result");
-//    logger.exiting(getClass().getName(), "getIpDetails");
-    //return new Gson().fromJson(result, JsonObject.class);
 
   }
 }
-
-// JSON response
-// {
-// status: "success",
-// country: "United States",
-// countryCode: "US",
-// region: "CA",
-// regionName: "California",
-// city: "Foster City",
-// zip: "94404",
-// lat: "37.555",
-// lon: "-122.2687",
-// timezone: "America/Los_Angeles",
-// isp: "Comcast Business Communications",
-// org: "Comcast Business Communications",
-// as: "AS7922 Comcast Cable Communications, Inc.",
-// query: "198.0.200.105"
-// }

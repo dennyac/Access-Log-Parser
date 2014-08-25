@@ -3,166 +3,197 @@ package com.dennyac.accesslogparser;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * The LogEntry class is a wrapper around the LogEntryAvro class which is generated from the
+ * LogEntryAvro schema file. It also contains a parse method to parse a log entry
+ * @author Denny Abraham Cheriyan
+ * @version 1.0, Aug 2014
+ */
 public class LogEntry {
-  private String remoteHost;
-  // Check whether date datatype makes sense
-  private String timeStamp;
-  private String request;
-  private String statusCode;
-  private String organization;
-  private String latitude;
-  private String longitude;
-  private String ispName;
-  private int size;
-  private String referer;
-  private String userAgent;
-  private StringBuffer errorMessage;
-    
-  public LogEntry(String entry){
+
+  private LogEntryAvro logEntry;
+
+  public LogEntryAvro getAvroObject() {
+    return logEntry;
+  }
+
+  public LogEntry(String entry) {
     parse(entry);
   }
 
   public String getErrorMessage() {
-    if (errorMessage == null) return null;
-    return errorMessage.toString();
-
+    try {
+      return logEntry.getErrorMessage().toString();
+    } catch (NullPointerException e) {
+      return null;
+    }
   }
 
-  public void appendError(String errorMessage) {
-    if (this.errorMessage == null) this.errorMessage = new StringBuffer();
-    this.errorMessage.append(errorMessage);
+  public void setError(String errorMessage) {
+    logEntry.setErrorMessage(errorMessage);
   }
 
   public String getRemoteHost() {
-    return remoteHost;
+    try {
+      return logEntry.getRemoteHost().toString();
+    } catch (NullPointerException e) {
+      return null;
+    }
   }
 
   public void setRemoteHost(String remoteHost) {
-    this.remoteHost = remoteHost;
+    logEntry.setRemoteHost(remoteHost);
   }
 
   public String getTimeStamp() {
-    return timeStamp;
+    try {
+      return logEntry.getTimeStamp().toString();
+    } catch (NullPointerException e) {
+      return null;
+    }
   }
 
   public void setTimeStamp(String timeStamp) {
-    this.timeStamp = timeStamp;
+    logEntry.setTimeStamp(timeStamp);
   }
 
   public String getRequest() {
-    return request;
+    try {
+      return logEntry.getRequest().toString();
+    } catch (NullPointerException e) {
+      return null;
+    }
   }
 
   public void setRequest(String request) {
-    this.request = request;
+    logEntry.setRequest(request);
   }
 
-  public String getStatusCode() {
-    return statusCode;
+  public Integer getStatusCode() {
+    try {
+      return logEntry.getStatusCode();
+    } catch (NullPointerException e) {
+      return null;
+    }
   }
 
   public void setStatusCode(String statusCode) {
-    this.statusCode = statusCode;
+    logEntry.setStatusCode(Integer.parseInt(statusCode));
   }
 
-  public int getSize() {
-    return size;
+  public Integer getSize() {
+    try {
+      return logEntry.getSize();
+    } catch (NullPointerException e) {
+      return null;
+    }
   }
 
   public void setSize(int size) {
-    this.size = size;
+    logEntry.setSize(size);
   }
 
   public String getReferer() {
-    return referer;
+    try {
+      return logEntry.getReferer().toString();
+    } catch (NullPointerException e) {
+      return null;
+    }
   }
 
   public void setReferer(String referer) {
-    this.referer = referer;
+    logEntry.setReferer(referer);
   }
 
   public String getUserAgent() {
-    return userAgent;
+    try {
+      return logEntry.getUserAgent().toString();
+    } catch (NullPointerException e) {
+      return null;
+    }
   }
 
   public void setUserAgent(String userAgent) {
-    this.userAgent = userAgent;
+    logEntry.setUserAgent(userAgent);
   }
 
   public String getOrganization() {
-    return organization;
+    try {
+      return logEntry.getOrganization().toString();
+    } catch (NullPointerException e) {
+      return null;
+    }
   }
 
   public void setOrganization(String organization) {
-    this.organization = organization;
+    logEntry.setOrganization(organization);
   }
 
   public String getLatitude() {
-    return latitude;
+    try {
+      return logEntry.getLatitude().toString();
+    } catch (NullPointerException e) {
+      return null;
+    }
   }
 
   public void setLatitude(String latitude) {
-    this.latitude = latitude;
+    logEntry.setLatitude(latitude);
   }
 
   public String getLongitude() {
-    return longitude;
+    try {
+      return logEntry.getLongitude().toString();
+    } catch (NullPointerException e) {
+      return null;
+    }
   }
 
   public void setLongitude(String longitude) {
-    this.longitude = longitude;
+    logEntry.setLongitude(longitude);
   }
 
   public String getIspName() {
-    return ispName;
+    try {
+      return logEntry.getIspName().toString();
+    } catch (NullPointerException e) {
+      return null;
+    }
   }
 
   public void setIspName(String ispName) {
-    this.ispName = ispName;
+    logEntry.setIspName(ispName);
   }
 
-  // Make this function throw exception
-  // write exceptions to string directly
-  public void parse(String logEntry) {
+  /**
+   * Takes a log entry as input, parses it, and initializes the LogEntryAvro object.
+   * @param log   Log entry
+   */
+  public void parse(String log) {
     String logEntryPattern =
         "^([\\d.]+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\d+) \"([^\"]+)\" \"([^\"]+)\"";
-    int NUM_FIELDS = 9;
-
-    // System.out.println("Using RE Pattern:");
-    // System.out.println(logEntryPattern);
-    //
-    // System.out.println("Input line is:");
-    // System.out.println(logEntry);
-
     Pattern p = Pattern.compile(logEntryPattern);
-    Matcher matcher = p.matcher(logEntry);
-    if (!matcher.matches() || NUM_FIELDS != matcher.groupCount()) {
-      errorMessage.append("Incorrect number of fields");
+    Matcher matcher = p.matcher(log);
+    if (!matcher.matches() || matcher.groupCount() != 9) {
+      logEntry = new LogEntryAvro();
+      logEntry.setErrorMessage("Incorrect number of fields");
+      logEntry.setLogEntry(log);
+    } else {
+      logEntry = new LogEntryAvro();
+      logEntry.setRemoteHost(matcher.group(1));
+      logEntry.setTimeStamp(matcher.group(4));
+      logEntry.setRequest(matcher.group(5));
+      logEntry.setStatusCode(Integer.parseInt(matcher.group(6)));
+      logEntry.setSize(Integer.parseInt(matcher.group(7)));
+      logEntry.setUserAgent(matcher.group(9));
+      if (!matcher.group(8).equals("-")) logEntry.setReferer(matcher.group(8));
     }
-
-    remoteHost = matcher.group(1);
-    // Check whether date datatype makes sense
-    timeStamp = matcher.group(4);
-    request = matcher.group(5);
-    statusCode = matcher.group(6);
-    // probably include these in the setter functions and throw exceptions over there
-    size = Integer.parseInt(matcher.group(7));
-    if (!matcher.group(8).equals("-")) referer = matcher.group(8);
-    userAgent = matcher.group(9);
 
   }
 
-  /*
-   * (non-Javadoc)
-   * @see java.lang.Object#toString()
-   */
   @Override
   public String toString() {
-    return "LogEntry [remoteHost=" + remoteHost + ", timeStamp=" + timeStamp + ", request="
-        + request + ", statusCode=" + statusCode + ", organization=" + organization + ", latitude="
-        + latitude + ", longitude=" + longitude + ", ispName=" + ispName + ", size=" + size
-        + ", referer=" + referer + ", userAgent=" + userAgent + ", errorMessage=" + errorMessage
-        + "]";
+    return logEntry.toString();
   }
 
 }

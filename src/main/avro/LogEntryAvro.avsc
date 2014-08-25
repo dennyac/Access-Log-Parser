@@ -1,0 +1,19 @@
+{"namespace": "com.dennyac.accesslogparser",
+ "type": "record",
+ "name": "LogEntryAvro",
+ "fields": [
+     {"name": "remoteHost", "type": ["string","null"]},
+     {"name": "timeStamp", "type": ["string","null"]},
+     {"name": "request", "type": ["string","null"]},
+     {"name": "statusCode", "type": ["int","null"]},
+     {"name": "organization", "type": ["string","null"]},
+     {"name": "latitude", "type": ["string","null"]},
+     {"name": "longitude", "type": ["string","null"]},
+     {"name": "ispName", "type": ["string","null"]},
+     {"name": "size", "type": ["int","null"]},
+     {"name": "referer", "type": ["string","null"]},
+     {"name": "userAgent", "type": ["string","null"]},
+     {"name": "logEntry", "type": ["string","null"]},
+     {"name": "errorMessage", "type": ["string","null"]}
+ ]
+}

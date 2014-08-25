@@ -4,17 +4,10 @@ import static org.junit.Assert.*;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import org.junit.Before;
 import org.junit.Test;
 
 
 public class IpUpdateTest {
-
-  @Before
-  public void initialize() {
-
-  }
 
   @Test
   public void updateIpDetailsTest() {
@@ -55,15 +48,6 @@ public class IpUpdateTest {
         e.printStackTrace();
       }
     }
-//    try {
-//      //Wait for 5 seconds for the ipUpdate thread to consume the log entries
-//      Thread.sleep(3000);
-//      //Simulate the fact that the LineReader thread has completed reading the file
-//      status.setFileReadComplete(true);
-//      Thread.sleep(3000);
-//    } catch (InterruptedException ex) {
-//      Thread.currentThread().interrupt();
-//    }
     assertTrue("Intermediate Queue should be empty",intermediateQueue.size()==0);
     assertTrue("Write Queue should have two entries",writeQueue.size()==2);
     assertTrue("Update complete flag should be set",status.isIpUpdateComplete());
