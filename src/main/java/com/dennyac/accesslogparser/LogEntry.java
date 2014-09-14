@@ -164,6 +164,13 @@ public class LogEntry {
   public void setIspName(String ispName) {
     logEntry.setIspName(ispName);
   }
+  
+  public void setIpDetails(IpDetails ipDet){
+    setIspName(ipDet.getIsp());
+    setLatitude(ipDet.getLat());
+    setLongitude(ipDet.getLon());
+    setOrganization(ipDet.getOrg());
+  }
 
   /**
    * Takes a log entry as input, parses it, and initializes the LogEntryAvro object.

@@ -33,7 +33,11 @@ public class Driver {
     Parser accessLogParser = new Parser();
     logger.log(Level.INFO, "Instantiated Parser Object");
 
-    accessLogParser.parseLog(inFile, outFile);
+    try {
+      accessLogParser.parseLog(inFile, outFile);
+    } catch (InterruptedException e) {
+      logger.log(Level.SEVERE, "Error occured in the Driver", e);
+    }
     logger.log(Level.INFO, "Completed parsing access log");
   }
 

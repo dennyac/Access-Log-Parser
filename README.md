@@ -16,7 +16,7 @@ After updating the log entry, they are placed on the write queue. Log entries fr
 
 ##Getting Started
 
-1. Ensure that you have Java 1.6 and Maven 3.2 installed
+1. Ensure that you have Java 1.8 and Maven 3.2 installed
 
 2. Clone this repository
 
@@ -29,5 +29,5 @@ git clone https://github.com/dennyac/Access-Log-Parser.git
   ```shell
   mvn package
   cd target
-  java -cp acesslog-parser-0.0.1-SNAPSHOT-jar-with-dependencies.jar com.dennyac.accesslogparser.Driver input_file.log output_file.avro
+  java -cp accesslog-parser-0.0.1-SNAPSHOT-jar-with-dependencies.jar com.dennyac.accesslogparser.Driver input_file.log output_file.avro
   ```
