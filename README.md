@@ -24,7 +24,7 @@ After updating the log entry, they are placed on the write queue. Log entries fr
 git clone https://github.com/dennyac/Access-Log-Parser.git
 ```
 
-3. To start the access log parser, execute the following commands from the project base directory4
+3. To start the access log parser, execute the following commands from the project base directory
 
   ```shell
   mvn package
